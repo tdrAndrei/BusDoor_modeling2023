@@ -4,11 +4,11 @@ include("./BeamProblem.jl")
 import .BeamProblem
 
 ## Constants
-N = 1000; #uneven number (we start counting at 1 .. index)
-xp = 10;
+N = 100; #uneven number (we start counting at 1 .. index)
+xp = 50;
 L = 1;
 h = L / (N - 1);
-EI = 1;
+EI = 56000;
 load = 490;
 dpi = 300
 
@@ -22,5 +22,5 @@ yA = BeamProblem.analytical_solution_static(N, h, L, x, xp, load, EI)
 yN = A2 \ (qx / EI)                 ## Iterative solver? Equivalent of spsolve in Python?
 
 ## Plotting
-plot(x, -yN, label="Numerical Solution", xlabel="Length [m]", ylabel="Deflection [m]", show=true, dpi=dpi)
-plot!(x, -yA, label="Analytical Solution", linestyle=:dash, color=:red, show=true, dpi=dpi)
+plot(x, yN, label="Numerical Solution", xlabel="Length [m]", ylabel="Deflection [m]", show=true, dpi=dpi)
+plot!(x, yA, label="Analytical Solution", linestyle=:dash, color=:red, show=true, dpi=dpi)

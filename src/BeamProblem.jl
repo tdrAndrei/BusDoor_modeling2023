@@ -29,6 +29,19 @@ function point_load(N, h, xp, load)
     v
 end
 
+function point_load_t(N, h, xp, load, t, specified_t)
+    v = zeros(N)
+    if (t > specified_t)
+        return v
+    end
+
+    v[xp] = load / h
+    ## Initial conditions
+    v[1] = 0
+    v[end] = 0
+    v
+end
+
 function analytical_solution_static(N, h, L, x, xp, load, EI)
     # First half of the beam
     a = (xp - 1) * h

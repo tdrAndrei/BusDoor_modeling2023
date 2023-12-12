@@ -13,8 +13,9 @@ export dynamic_eq!, solve_eq, plot_sol
 N = 100 #uneven number (we start counting at 1 .. index)
 xp = 50
 L = 1
+w = 1
 h = L / (N - 1)
-EI = 56000
+EI = 10 * (L^3) / 3
 load = 490
 μ = 1.0
 dpi = 300
@@ -45,7 +46,7 @@ end
 
 function eigenfrequencies()
     B = EI / μ * A2
-    eigenvalues, modes = eigs(B, nev=size(B)[1])
+    eigenvalues, modes = eigs(B, nev=size(B)[1] - 1)
     eigenvalues
 end
 

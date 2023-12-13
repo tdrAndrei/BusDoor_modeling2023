@@ -1,36 +1,48 @@
-module DynamicEq
+module Beam
+
 using DifferentialEquations
 using Plots
 using SparseArrays
 using LinearAlgebra
 using Arpack
 
-export BeamProblem, 
-    point_load, 
-    point_load_t,  
-    dynamic_eq_numerical, 
-    animate_sol
+export BeamProblem,
+    point_load,
+    point_load_t,
+    dynamic_eq_numerical,
+    animate_sol,
+    static_eq_analytical,
+    static_eq_numerical
+
 
 struct BeamProblem
-    N #uneven number (we start counting at 1 .. index)
-    L
-    h
+    N::Int64 #uneven number (we start counting at 1 .. index)
+    L::Int64
+    h::Float64
     A2 #What type
-    EI
-    μ
-    xp
-    u0
-    F
+    EI::Float64
+    μ::Float64
+    xp::Int64
+    u0::Vector{Float64}
+    F::Function
 
-    function BeamProblem(;N, L, μ, xp, f, EI=nothing, u0=nothing) # Constructor 
+    function BeamProblem(; N, L, μ, xp, f, EI=nothing, u0=nothing) # Constructor 
         h = L / (N - 1)
         A2 = discretize_space(N, h)
-        F = f(N, h, xp)
-        
+
+        # Default for F
+        if !isnothing(f)
+            F = f(N, h, xp)
+        else
+            F = (t) -> 0
+        end
+
+        # Default for EI
         if isnothing(EI)
             EI = 10 * (L^3) / 3
         end
 
+        #Default for u0
         if isnothing(u0)
             u0 = zeros(N)
         end
@@ -57,6 +69,11 @@ function discretize_space(N, h)
     A2 = dropzeros(A * A)
 end
 
+
+################################
+#            Forces            #
+################################
+
 point_load(load) = (N, h, xp) -> begin
     v = zeros(N)
     v[xp] = load / h
@@ -80,8 +97,13 @@ point_load_t(load, specified_t) = (N, h, xp) -> begin
     end
 end
 
-function analytical_solution_static(p::BeamProblem, load)
-    L, EI, h, xp = p
+
+################################
+#       Static Equations       #
+################################
+
+function static_eq_analytical(p::BeamProblem, load)
+    (; L, EI, h, xp) = p
     # First half of the beam
     a = (xp - 1) * h
     # Last half of the beam
@@ -98,6 +120,15 @@ function analytical_solution_static(p::BeamProblem, load)
     w
 end
 
+function static_eq_numerical(p::BeamProblem)
+    (; A2, EI, F) = p
+    qx = F(0) #F is constant in time, so get the value at any point
+    return A2 \ (qx / EI)
+end
+
+#################################
+#       Dynamic Equations       #
+#################################
 
 function dynamic_eq!(ddu, du, u, p, t)
     A2, μ, EI, F = p
@@ -111,11 +142,10 @@ function dynamic_eq_numerical(p::BeamProblem, tspan)
     sol
 end
 
-function animate_sol(p::BeamProblem, tspan)
-    sol = dynamic_eq_numerical(p, tspan)
+function animate_sol(sol, ymax=0.0005)
     anim = @animate for i ∈ 1:length(sol.t)
         plot(sol.u[i][2, :], label="bending")
-        ylims!(0, 0.0005)
+        ylims!(0, ymax)
     end every 20
     gif(anim, "dynamic_beam.gif", fps=10)
 end

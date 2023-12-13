@@ -1,6 +1,8 @@
-module PointMassExamples
+module PointMass
+
 using Plots
 using LaTeXStrings
+using DifferentialEquations
 
 export N_PointmassProblem,
     One_PointmassProblem,
@@ -9,21 +11,25 @@ export N_PointmassProblem,
     single_dof_undamped_force,
     single_dof_numerical
 
-struct N_PointmassProblem
+################## 
+#      Types     #   
+##################
+
+Base.@kwdef struct N_PointmassProblem
     ###   Constants
-    k::Vector{Float64}
     m::Vector{Float64}
     γ::Vector{Float64}
+    k::Vector{Float64}
     v0::Vector{Float64}
-    x0::Vector{Float64}
     F::Float64
 end
 
-struct One_PointmassProblem
+
+Base.@kwdef struct One_PointmassProblem
     ###   Constants
-    k::Float64
     m::Float64
     γ::Float64
+    k::Float64
     v0::Float64
     x0::Float64
     F::Float64
@@ -85,24 +91,34 @@ function single_dof_numerical(p::One_PointmassProblem, tspan)
         ddu[1] = -1 / m * (k * u[1] + c * du[1] + f)
     end
 
-    prob = SecondOrderODEProblem(one_spring_damper!, p.v0, p.x0, tspan, [p.m, p.γ, p.k, p.F])
+    prob = SecondOrderODEProblem(one_spring_damper!, [p.v0], [p.x0], tspan, [p.m, p.γ, p.k, p.F])
     sol = solve(prob)
 end
 
-###   Laplacian transforms
-###   2.1 No damping and no external force
-G(ω) = abs(1 / (-ω * ω * m + k))
-plot(G, -pi, pi, xlabel="ω", ylabel="|G(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
-# Think: scientific programming, asympotic behaviour
 
-###   2.2 Damping wihtout external force
-#     Real part
-Hx(ω) = (-m * ω * ω + k) / ((-m * ω * ω + k)^2 + γ * γ * ω * ω)
-#     Imaginary part
-Hy(ω) = -(γ * ω) / ((-m * ω * ω + k)^2 + γ * γ * ω * ω)
-#     Magnitude
-H(ω) = sqrt(Hx(ω) * Hx(ω) + Hy(ω) * Hy(ω))
+########################## 
+#   Laplace transforms   #   
+##########################
 
-plot(H, -pi, pi, xlabel="ω", ylabel="|H(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
+function single_dof_undamped_noforce_laplace(p::One_PointmassProblem)
+    ###   2.1 No damping and no external force
+    ω0 = nat_freq(p)
+    G(ω) = abs(1 / (-ω * ω * p.m + p.k))
+    plot(G, -pi, pi, xlabel="ω", ylabel="|G(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
+    # Think: scientific programming, asympotic behaviour
+end
+
+function single_dof_damped_noforce_laplace(p::One_PointmassProblem)
+    ###   2.2 Damping wihtout external force
+    ω0 = nat_freq(p)
+    #     Real part
+    Hx(ω) = (-p.m * ω * ω + p.k) / ((-p.m * ω * ω + p.k)^2 + p.γ * p.γ * ω * ω)
+    #     Imaginary part
+    Hy(ω) = -(p.γ * ω) / ((-p.m * ω * ω + p.k)^2 + p.γ * p.γ * ω * ω)
+    #     Magnitude
+    H(ω) = sqrt(Hx(ω) * Hx(ω) + Hy(ω) * Hy(ω))
+
+    plot(H, -pi, pi, xlabel="ω", ylabel="|H(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
+end
 
 end

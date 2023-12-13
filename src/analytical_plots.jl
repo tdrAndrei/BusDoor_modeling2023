@@ -89,6 +89,20 @@ function single_dof_numerical(p::One_PointmassProblem, tspan)
     sol = solve(prob)
 end
 
+###   Laplacian transforms
+###   2.1 No damping and no external force
+G(ω) = abs(1 / (-ω * ω * m + k))
+plot(G, -pi, pi, xlabel="ω", ylabel="|G(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
+# Think: scientific programming, asympotic behaviour
 
+###   2.2 Damping wihtout external force
+#     Real part
+Hx(ω) = (-m * ω * ω + k) / ((-m * ω * ω + k)^2 + γ * γ * ω * ω)
+#     Imaginary part
+Hy(ω) = -(γ * ω) / ((-m * ω * ω + k)^2 + γ * γ * ω * ω)
+#     Magnitude
+H(ω) = sqrt(Hx(ω) * Hx(ω) + Hy(ω) * Hy(ω))
+
+plot(H, -pi, pi, xlabel="ω", ylabel="|H(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
 
 end

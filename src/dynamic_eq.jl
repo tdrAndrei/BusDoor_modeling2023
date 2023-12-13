@@ -106,8 +106,8 @@ end
 
 function dynamic_eq_numerical(p::BeamProblem, tspan)
     v0 = zeros(p.N)
-    prob = SecondOrderODEProblem(dynamic_eq!, v0, p.u0, tspan, [p.A2, p.μ, p.EI, p.F])
-    sol = solve(prob)
+    prob = SecondOrderODEProblem(dynamic_eq!, v0, p.u0, tspan, (p.A2, p.μ, p.EI, p.F))
+    sol = solve(prob, alg=ImplicitEuler())
     sol
 end
 

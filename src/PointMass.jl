@@ -111,12 +111,8 @@ end
 function single_dof_damped_noforce_laplace(p::One_PointmassProblem)
     ###   2.2 Damping wihtout external force
     ω0 = nat_freq(p)
-    #     Real part
-    Hx(ω) = (-p.m * ω * ω + p.k) / ((-p.m * ω * ω + p.k)^2 + p.γ * p.γ * ω * ω)
-    #     Imaginary part
-    Hy(ω) = -(p.γ * ω) / ((-p.m * ω * ω + p.k)^2 + p.γ * p.γ * ω * ω)
     #     Magnitude
-    H(ω) = sqrt(Hx(ω) * Hx(ω) + Hy(ω) * Hy(ω))
+    H(ω) = abs(1 / (m * (im * ω)^2 + γ * (im * ω) + k))
 
     plot(H, -pi, pi, xlabel="ω", ylabel="|H(ω)|", xticks=([-ω0, ω0], ["-ω0", "ω0"]))
 end

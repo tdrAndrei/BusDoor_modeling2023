@@ -144,7 +144,7 @@ end
 
 function animate_sol(sol, ymax=0.0005)
     anim = @animate for i ∈ 1:length(sol.t)
-        plot(sol.u[i][2, :], label="bending")
+        plot(sol.u[i][2, :], label="bending t=$(sol.t[i])")
         ylims!(0, ymax)
     end every 20
     gif(anim, "dynamic_beam.gif", fps=10)

@@ -32,7 +32,7 @@ struct BeamProblem
 
         # Default for F
         if !isnothing(f)
-            F = f(N, h, xp)
+            F = f(N, h, xp, μ)
         else
             F = (t) -> 0
         end
@@ -74,7 +74,7 @@ end
 #            Forces            #
 ################################
 
-point_load(load) = (N, h, xp) -> begin
+point_load(load) = (N, h, xp, μ) -> begin
     v = zeros(N)
     v[xp] = load / h
     ## Initial conditions
@@ -83,7 +83,7 @@ point_load(load) = (N, h, xp) -> begin
     return (t) -> v
 end
 
-point_load_t(load, specified_t) = (N, h, xp) -> begin
+point_load_t(load, specified_t) = (N, h, xp, μ) -> begin
     v = zeros(N)
     v[xp] = load / h
     ## Initial conditions
@@ -133,6 +133,7 @@ end
 function dynamic_eq!(ddu, du, u, p, t)
     A2, μ, EI, F = p
     ddu .= (1 / μ) * (-EI * A2 * u + F(t))
+    println(ddu[end])
 end
 
 function dynamic_eq_numerical(p::BeamProblem, tspan)

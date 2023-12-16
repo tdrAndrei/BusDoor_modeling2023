@@ -35,7 +35,7 @@ Base.@kwdef struct One_PointmassProblem
     F::Float64
 end
 
-damping_ratio(p::One_PointmassProblem) = p.γ / sqrt(2 * p.k * p.m)
+damping_ratio(p::One_PointmassProblem) = p.γ / (2 * sqrt(p.k * p.m))
 nat_freq(p::One_PointmassProblem) = sqrt(p.k / p.m)
 
 ################## 
@@ -48,7 +48,7 @@ function single_dof_damped_noforce(p::One_PointmassProblem)
     ω0 = nat_freq(p)
 
     c1 = (p.v0 + ζ * ω0 * p.x0) / (ω0 * sqrt(1 - ζ * ζ))
-    c2 = x0
+    c2 = p.x0
     a = ω0 * sqrt(1 - ζ * ζ)
     #     Solution
     x1(t) = exp(-ω0 * ζ * t) * (c1 * sin(a * t) + c2 * cos(a * t))
@@ -61,8 +61,8 @@ function single_dof_damped_force(p::One_PointmassProblem)
     ζ = damping_ratio(p)
     ω0 = nat_freq(p)
 
-    c3 = p.x0 - p.F / p.k
-    c4 = (p.v0 + ω0 * ζ * c3) / (ω0 * sqrt(1 - ζ * ζ))
+    c4 = p.x0 - p.F / p.k
+    c3 = (p.v0 + ω0 * ζ * c4) / (ω0 * sqrt(1 - ζ * ζ))
     b = ω0 * sqrt(1 - ζ * ζ)
     #     Solution
     x2(t) = exp(-ω0 * ζ * t) * (c3 * sin(b * t) + c4 * cos(b * t)) + p.F / p.k
@@ -87,8 +87,8 @@ end
 
 function single_dof_numerical(p::One_PointmassProblem, tspan)
     function one_spring_damper!(ddu, du, u, p, t)
-        m, c, k, f = p
-        ddu[1] = -1 / m * (k * u[1] + c * du[1] + f)
+        m, γ, k, f = p
+        ddu[1] = -1 / m * (k * u[1] + γ * du[1] - f)
     end
 
     prob = SecondOrderODEProblem(one_spring_damper!, [p.v0], [p.x0], tspan, [p.m, p.γ, p.k, p.F])

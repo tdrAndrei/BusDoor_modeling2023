@@ -133,7 +133,6 @@ end
 function dynamic_eq!(ddu, du, u, p, t)
     A2, μ, EI, F = p
     ddu .= (1 / μ) * (-EI * A2 * u + F(t))
-    println(ddu[end])
 end
 
 function dynamic_eq_numerical(p::BeamProblem, tspan)

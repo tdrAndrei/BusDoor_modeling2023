@@ -9,19 +9,51 @@ export N_PointmassProblem,
     single_dof_damped_force,
     single_dof_damped_noforce,
     single_dof_undamped_force,
-    single_dof_numerical
+    single_dof_numerical,
+    n_dof_numerical
 
 ################## 
 #      Types     #   
 ##################
 
-Base.@kwdef struct N_PointmassProblem
+struct N_PointmassProblem
     ###   Constants
     m::Vector{Float64}
     γ::Vector{Float64}
     k::Vector{Float64}
     v0::Vector{Float64}
+    x0::Vector{Float64}
     F::Float64
+
+    ###   Computed
+    M::Matrix{Float64}
+    C::Matrix{Float64}
+    K::Matrix{Float64}
+    function N_PointmassProblem(; m::Vector{Float64}, γ::Vector{Float64}, k::Vector{Float64}, v0::Vector{Float64}, x0::Vector{Float64}, F::Float64)
+        n = size(m, 1)
+        M = zeros((n, n))
+        K = zeros((n, n))
+        C = zeros((n, n))
+
+        for i in 1:n
+            M[i, i] = m[i]
+            K[i, i] = k[i] + k[i+1]
+            C[i, i] = γ[i] + γ[i+1]
+
+            if i > 1
+                K[i, i-1] = -k[i]
+                C[i, i-1] = -γ[i]
+            end
+
+            if i < n
+                K[i, i+1] = -k[i+1]
+                C[i, i+1] = -γ[i+1]
+            end
+        end
+
+        new(m, γ, k, v0, x0, F, M, C, K)
+    end
+
 end
 
 
@@ -95,6 +127,16 @@ function single_dof_numerical(p::One_PointmassProblem, tspan)
     sol = solve(prob)
 end
 
+function n_dof_numerical(p::N_PointmassProblem, tspan)
+    function N_spring_damper!(ddu, du, u, p, t)
+        M, C, K, F = p
+        ddu = M \ (-C * du - K * u + F)
+        print(ddu)
+    end
+
+    prob = SecondOrderODEProblem(N_spring_damper!, [p.v0], [p.x0], tspan, [p.M, p.C, p.K, p.F])
+    sol = solve(prob)
+end
 
 ########################## 
 #   Laplace transforms   #   

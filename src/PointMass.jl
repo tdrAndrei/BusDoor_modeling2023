@@ -23,13 +23,13 @@ struct N_PointmassProblem
     k::Vector{Float64}
     v0::Vector{Float64}
     x0::Vector{Float64}
-    F::Float64
+    F::Vector{Float64}
 
     ###   Computed
     M::Matrix{Float64}
     C::Matrix{Float64}
     K::Matrix{Float64}
-    function N_PointmassProblem(; m::Vector{Float64}, γ::Vector{Float64}, k::Vector{Float64}, v0::Vector{Float64}, x0::Vector{Float64}, F::Float64)
+    function N_PointmassProblem(; m::Vector{Float64}, γ::Vector{Float64}, k::Vector{Float64}, v0::Vector{Float64}, x0::Vector{Float64}, F::Vector{Float64})
         n = size(m, 1)
         M = zeros((n, n))
         K = zeros((n, n))
@@ -130,11 +130,10 @@ end
 function n_dof_numerical(p::N_PointmassProblem, tspan)
     function N_spring_damper!(ddu, du, u, p, t)
         M, C, K, F = p
-        ddu = M \ (-C * du - K * u + F)
-        print(ddu)
+        ddu .= M \ (-C * du - K * u + F)
     end
 
-    prob = SecondOrderODEProblem(N_spring_damper!, [p.v0], [p.x0], tspan, [p.M, p.C, p.K, p.F])
+    prob = SecondOrderODEProblem(N_spring_damper!, p.v0, p.x0, tspan, [p.M, p.C, p.K, p.F])
     sol = solve(prob)
 end
 

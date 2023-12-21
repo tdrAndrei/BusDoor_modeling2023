@@ -58,8 +58,8 @@ function discretize_space(N, h)
     v1 = -2 * norm * ones(N)
     v2 = norm * ones(N - 1)
     v3 = v2
-    v1[1] = 1
-    v1[end] = 1
+    v1[1] = 0
+    v1[end] = 0
     v2[1] = 0
     v3[end] = 0
 

@@ -173,7 +173,7 @@ gaussian_load(load) = (N, h, xp, μ) -> begin
 
     f = zeros(N)
 
-    n = 30
+    n = floor(Int, N*0.3)
     c = xp*h
     σ = 0.05
 

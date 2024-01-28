@@ -5,6 +5,7 @@ using Plots
 using SparseArrays
 using LinearAlgebra
 using Arpack
+using Distributions
 
 export BeamProblem,
     point_load,
@@ -12,8 +13,8 @@ export BeamProblem,
     dynamic_eq_numerical,
     animate_sol,
     static_eq_analytical,
-    static_eq_numerical
-
+    static_eq_numerical,
+    gaussian_load
 
 struct BeamProblem
     N::Int64 #uneven number (we start counting at 1 .. index)
@@ -26,12 +27,14 @@ struct BeamProblem
     u0::Vector{Float64}
     F::Function
 
-    function BeamProblem(; N, L, μ, xp, f, k=nothing, EI=nothing, u0=nothing) # Constructor 
+    function BeamProblem(; N, L, μ, xp, f, k=nothing, EI=nothing, u0=nothing, matrix_type="A2") # Constructor 
         h = L / (N - 1)
-        #A2 = discretize_space(N, h)
-        A2 = double_laplacian_check(N, h, k, EI)
-        #A2 = double_laplacian(N, h, k, EI)
-
+        if (matrix_type=="double_laplacian")
+            A2 = double_laplacian_check(N, h, k, EI)
+        elseif (matrix_type=="A2")
+            A2 = discretize_space(N, h)
+        end 
+        
         # Default for F
         if !isnothing(f)
             F = f(N, h, xp, μ)
@@ -162,6 +165,40 @@ point_load_t(load, specified_t) = (N, h, xp, μ) -> begin
     end
 end
 
+gaussian_load(load) = (N, h, xp, μ) -> begin
+    if (xp > N)
+        print("index too large")
+        return
+    end
+
+    f = zeros(N)
+
+    n = 30
+    c = xp*h
+    σ = 0.05
+
+    last = min(xp+n, N)  # Ensure last does not exceed N
+    points = xp+n > N ? (2 * n - (xp+n - N) + 1) : (2 * n + 1)
+
+    d = Normal(c, σ)
+
+    # Calculate quantiles
+    lo = max((xp - n) * h, -5σ + c)
+    hi = min((last) * h, 5σ + c)
+
+    # Generate x values
+    x = range(lo, hi; length = points)
+
+    # Calculate PDF values for the x values
+    pdf_values = pdf.(d, x)
+
+    area = h * sum(pdf_values)
+    pdf_values .= pdf_values * load/(area)
+
+    f[xp-n:last] = pdf_values
+    return (t) -> f
+end
+
 
 ################################
 #       Static Equations       #
@@ -208,15 +245,15 @@ function dynamic_eq_numerical(p::BeamProblem, tspan)
     sol
 end
 
-function animate_sol(sol, ymax=0.0005)
+function animate_sol(sol, h, L, ymax=0.0005)
     anim = @animate for i ∈ 1:length(sol.t)
-        plot(sol.u[i][2, :], label="bending t=$(sol.t[i])")
-        ylims!(-ymax, ymax)
+        plot((0:h:L),sol.u[i][2, :], xlabel="Length[m]",ylabel="Displacement[m]",label="bending t=$(sol.t[i])")
+        ylims!(0, ymax)
     end every 20
     gif(anim, "dynamic_beam.gif", fps=10)
 end
 
 end
-Beam.discretize_space(5, 1)
-Beam.double_laplacian(6, 1, 3, 1)
-Beam.double_laplacian_check(7, 1, 3, 1)
+# Beam.discretize_space(5, 1)
+# Beam.double_laplacian(6, 1, 3, 1)
+# Beam.double_laplacian_check(7, 1, 3, 1)

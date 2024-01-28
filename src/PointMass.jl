@@ -109,7 +109,7 @@ function single_dof_undamped_force(p::One_PointmassProblem)
     c5 = p.x0 - p.F / p.k
     c6 = p.v0 / ω0
     #     Solution
-    x3(t) = c5 * cos(ω0 * t) + c6 * sin(ω0 * t)
+    x3(t) = c5 * cos(ω0 * t) + c6 * sin(ω0 * t) + p.F / p.k
     #plot!(x3, 0.0, 30.0, label="not damped, F=500")
 end
 

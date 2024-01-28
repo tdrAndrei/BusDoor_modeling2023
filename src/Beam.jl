@@ -34,7 +34,7 @@ struct BeamProblem
 
         # Default for F
         if !isnothing(f)
-            F = f(N, h, xp)
+            F = f(N, h, xp, μ)
         else
             F = (t) -> 0
         end
@@ -59,9 +59,9 @@ function discretize_space(N, h)
     ## Compute diagonals
     v1 = -2 * norm * ones(N)
     v2 = norm * ones(N - 1)
-    v3 = norm * ones(N - 1)
-    v1[1] = 1 *norm
-    v1[end] = 1 * norm
+    v3 = v2
+    v1[1] = 1
+    v1[end] = 1
     v2[1] = 0
     v3[end] = 0
     ## Construct the 1D forward difference matrix
@@ -139,13 +139,13 @@ end
 #            Forces            #
 ################################
 
-point_load(load) = (N, h, xp) -> begin
+point_load(load) = (N, h, xp, μ) -> begin
     v = zeros(N)
     v[xp] = load / h
     return (t) -> v
 end
 
-point_load_t(load, specified_t) = (N, h, xp) -> begin
+point_load_t(load, specified_t) = (N, h, xp, μ) -> begin
     v = zeros(N)
     v[xp] = load / h
     ## Initial conditions
